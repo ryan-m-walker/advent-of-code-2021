@@ -9,72 +9,64 @@ fn main() {
 
     for i in 0..fish.len() {
         let f = fish[i];
-        let existing_bucket = buckets.iter().find(|b| b.count == f);
+        let existing_index = buckets.iter().position(|b| b.life == f);
 
-        if existing_bucket.is_none() {
+        if existing_index.is_none() {
             buckets.push(Bucket::new(1, f));
         } else {
-            let mut existing_bucket = existing_bucket.unwrap();
-            let new_count = existing_bucket.count + 1;
-            mem::replace(&mut existing_bucket, &Bucket::new(
+            let existing_index = existing_index.unwrap();
+            let bucket = mem::replace(&mut buckets[existing_index], Bucket::new(0, 0));
+
+            let new_count = bucket.count + 1;
+
+            buckets[existing_index] = Bucket::new(
                 new_count,
                 f
-            ),);
+            );
         }
     }
 
-    println!("BUCKETS {:?}", buckets.len());
 
-    for gen in 0..80 {
-        let mut fish_to_add: u32 = 0;
+    for _ in 0..256 {
+        let mut fish_to_add: u64 = 0;
 
         for i in 0..buckets.len() {
-            let mut bucket = &buckets[i];
+            let bucket = mem::replace(&mut buckets[i], Bucket::new(0, 0));
 
             if bucket.life == 0 {
                 fish_to_add += bucket.count;
-                let bucket_count = bucket.count;
-
-                mem::replace(&mut bucket, &Bucket::new(
-                    bucket_count,
-                    6
-                ));
+                buckets[i] = Bucket::new(bucket.count, 6);
             } else {
-                let bucket_count = bucket.count;
-                let new_life = bucket.life - 1;
-
-                mem::replace(&mut bucket, &Bucket::new(
-                    bucket_count,
-                    new_life,
-                ));
+                buckets[i] = Bucket::new(bucket.count, bucket.life - 1);
             }
         }
 
-        buckets.push(Bucket::new(
-            fish_to_add,
-            8
-        ));
+        
+        if fish_to_add > 0 {
+            buckets.push(Bucket::new(
+                fish_to_add,
+                8
+            ));
+        }
     }
 
-    // let mut final_count = 0;
+    let mut final_count = 0;
 
-    println!("BUCKETS {:?}", buckets);
+    for bucket in buckets {
+        final_count += bucket.count;
+    }
 
-    // for bucket in buckets {
-    //     final_count += bucket.count;
-    // }
-
-    // println!("Answer = {}", final_count);
+    println!("Answer = {}", final_count);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Bucket {
-    count: u32,
+    count: u64,
     life: u32,
 }
 
 impl Bucket {
-    pub fn new(count: u32, life: u32) -> Self {
+    pub fn new(count: u64, life: u32) -> Self {
         Bucket {
             count,
             life,
