@@ -12,15 +12,23 @@ fn main() {
     let boards: Vec<_> = boards.split("\n\n").collect();
     let mut boards: Vec<_> = boards.iter().map(|b| Board::from_str(b)).collect();
 
+    let mut winner_count = 0;
+
     'outer: for number in numbers {
         for i in 0..boards.len() {
             let mut board = mem::replace(&mut boards[i], Board::empty());
             board.mark_space(number);
-
             if board.check_for_win() {
-                let sum = board.get_sum_of_unmarked();
-                println!("Answer = {}", sum * number);
-                break 'outer;
+                if board.is_winner != true {
+                    winner_count += 1;
+                    board.is_winner = true;
+
+                    if winner_count == boards.len() {
+                        let sum = board.get_sum_of_unmarked();
+                        println!("Answer = {}", sum * number);
+                        break 'outer;
+                    }
+                }
             }
 
             boards[i] = board;
@@ -38,6 +46,7 @@ enum Cell {
 struct Board {
     data: Vec<Cell>,
     cols: u32,
+    is_winner: bool,
 }
 
 impl Board {
@@ -49,7 +58,11 @@ impl Board {
             .map(|c| Cell::Space(c.parse::<u32>().unwrap()))
             .collect();
 
-        Self { cols: 5, data }
+        Self {
+            cols: 5,
+            data,
+            is_winner: false,
+        }
     }
 
     fn empty() -> Self {
@@ -59,7 +72,11 @@ impl Board {
             data.push(Cell::Space(0));
         }
 
-        Self { cols: 5, data }
+        Self {
+            cols: 5,
+            data,
+            is_winner: false,
+        }
     }
 
     fn print(&self) {
@@ -137,7 +154,7 @@ impl Board {
             }
         }
 
-        return false;
+        false
     }
 
     fn get_index(&self, x: u32, y: u32) -> usize {
